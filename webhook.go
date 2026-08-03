@@ -32,10 +32,6 @@ func VerifyGitHubSignature(secret, payload, signature string) error {
 	}
 	return nil
 }
-
-// WebhookHandler returns an http.HandlerFunc that validates and dispatches
-// incoming GitHub webhooks. It is mounted at WebhookPath by Server, or can be
-// mounted in any HTTP server via WebhookMiddleware / Handler.
 func (p *Probot) WebhookHandler() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		if r.Method != http.MethodPost {
@@ -101,8 +97,6 @@ func (p *Probot) WebhookMiddleware() func(http.Handler) http.Handler {
 	}
 }
 
-// Handler returns an http.Handler that handles webhook events at WebhookPath.
-// Requests to other paths are handled by next if provided, otherwise a 404.
 func (p *Probot) Handler(next ...http.Handler) http.Handler {
 	handler := p.WebhookHandler()
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
