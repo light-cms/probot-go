@@ -1,11 +1,14 @@
 package probot
 
 import (
+	"bufio"
+	"bytes"
 	"context"
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"net/http/httptest"
 	"os"
 	"path/filepath"
 	"strconv"
@@ -85,6 +88,9 @@ func (s *Server) Start() error {
 		ReadHeaderTimeout: 5 * time.Second,
 	}
 	s.probot.log.Info().Str("addr", s.httpS.Addr).Str("webhook", s.path).Msg("starting probot server")
+
+	s.startWebhookProxy()
+
 	err := s.httpS.ListenAndServe()
 	if err == http.ErrServerClosed {
 		return nil
@@ -146,6 +152,7 @@ var setupPermissions = []struct {
 }{
 	{"checks", "write"},
 	{"contents", "write"},
+	{"discussions", "write"},
 	{"issues", "write"},
 	{"metadata", "read"},
 	{"pull_requests", "write"},
@@ -340,4 +347,113 @@ func sanitizeName(s string) string {
 func mustJSON(v any) string {
 	b, _ := json.Marshal(v)
 	return string(b)
+}
+
+type smeeEvent struct {
+	Body    json.RawMessage   `json:"body"`
+	Headers map[string]string `json:"headers"`
+	Query   map[string]any    `json:"query"`
+}
+
+func (s *Server) startWebhookProxy() {
+	url := s.probot.opts.WebhookProxyURL
+	if url == "" {
+		return
+	}
+
+	s.probot.log.Info().Str("url", url).Msg("starting webhook proxy client")
+	go func() {
+		for {
+			err := s.runProxyLoop(url)
+			if err != nil {
+				s.probot.log.Error().Err(err).Msg("webhook proxy client error, reconnecting in 5 seconds")
+			}
+			time.Sleep(5 * time.Second)
+		}
+	}()
+}
+
+func (s *Server) runProxyLoop(proxyURL string) error {
+	req, err := http.NewRequest(http.MethodGet, proxyURL, nil)
+	if err != nil {
+		return err
+	}
+	req.Header.Set("Accept", "text/event-stream")
+
+	client := &http.Client{
+		Timeout: 0,
+	}
+	resp, err := client.Do(req)
+	if err != nil {
+		return err
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode >= 300 {
+		return fmt.Errorf("unexpected status code: %d", resp.StatusCode)
+	}
+
+	reader := bufio.NewReader(resp.Body)
+	for {
+		line, err := reader.ReadString('\n')
+		if err != nil {
+			return err
+		}
+		line = strings.TrimSpace(line)
+		if !strings.HasPrefix(line, "data: ") {
+			continue
+		}
+		dataStr := strings.TrimPrefix(line, "data: ")
+		if dataStr == "" || dataStr == "{}" {
+			continue
+		}
+
+		var ev smeeEvent
+		if err := json.Unmarshal([]byte(dataStr), &ev); err != nil {
+			s.probot.log.Warn().Err(err).Msg("failed to unmarshal smee event")
+			continue
+		}
+
+		s.forwardSmeeEvent(ev)
+	}
+}
+
+func (s *Server) forwardSmeeEvent(ev smeeEvent) {
+	bodyBytes := []byte(ev.Body)
+
+	req, err := http.NewRequest(http.MethodPost, s.path, bytes.NewReader(bodyBytes))
+	if err != nil {
+		s.probot.log.Error().Err(err).Msg("failed to create request for proxy event")
+		return
+	}
+
+	for k, v := range ev.Headers {
+		req.Header.Set(k, v)
+	}
+
+	for k, v := range ev.Headers {
+		lk := strings.ToLower(k)
+		switch lk {
+		case "x-github-event":
+			req.Header.Set("X-GitHub-Event", v)
+		case "x-github-delivery":
+			req.Header.Set("X-GitHub-Delivery", v)
+		case "x-hub-signature-256":
+			req.Header.Set("X-Hub-Signature-256", v)
+		}
+	}
+
+	rec := httptest.NewRecorder()
+	s.Handler().ServeHTTP(rec, req)
+
+	if rec.Code >= 400 {
+		s.probot.log.Warn().
+			Int("status", rec.Code).
+			Str("body", rec.Body.String()).
+			Msg("proxy event forward returned error status")
+	} else {
+		s.probot.log.Info().
+			Str("event", req.Header.Get("X-GitHub-Event")).
+			Msg("proxy event forwarded successfully")
+	}
 }

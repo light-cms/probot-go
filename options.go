@@ -52,6 +52,10 @@ type Options struct {
 	// to "/api/github/webhooks".
 	WebhookPath string
 
+	// WebhookProxyURL is the URL of a webhook proxy service (e.g. Smee.io)
+	// that forwards webhooks to localhost.
+	WebhookProxyURL string
+
 	// RequestTimeout limits each GitHub API request. Defaults to 30s.
 	RequestTimeout time.Duration
 }
@@ -136,6 +140,9 @@ func Defaults(o Options) func(*Options) {
 		if opt.WebhookPath == "" {
 			opt.WebhookPath = o.WebhookPath
 		}
+		if opt.WebhookProxyURL == "" {
+			opt.WebhookProxyURL = o.WebhookProxyURL
+		}
 		if opt.RequestTimeout == 0 {
 			opt.RequestTimeout = o.RequestTimeout
 		}
@@ -158,8 +165,9 @@ func OptionsFromEnv() (Options, error) {
 		GithubToken: env("GITHUB_TOKEN"),
 		LogLevel:    env("LOG_LEVEL"),
 		LogFormat:   env("LOG_FORMAT"),
-		Host:        env("HOST"),
-		WebhookPath: env("WEBHOOK_PATH"),
+		Host:            env("HOST"),
+		WebhookPath:     env("WEBHOOK_PATH"),
+		WebhookProxyURL: env("WEBHOOK_PROXY_URL"),
 	}
 	if key := env("PRIVATE_KEY_PATH"); key != "" && o.PrivateKey == "" {
 		b, err := os.ReadFile(key)

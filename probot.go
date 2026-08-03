@@ -1,9 +1,11 @@
 package probot
 
 import (
+	"encoding/json"
 	"errors"
 	"fmt"
 	"net/http"
+	"os"
 	"strconv"
 	"strings"
 	"sync"
@@ -240,4 +242,33 @@ func (p *Probot) Auth(installationID ...int64) (*github.Client, error) {
 		return p.appClient, nil
 	}
 	return p.newInstallationClient(installationID[0])
+}
+
+// RunAction reads GITHUB_EVENT_PATH and GITHUB_EVENT_NAME from the environment,
+// loads the payload, and dispatches it to the registered handlers, then returns.
+// This allows running your Probot app directly as a GitHub Action.
+func (p *Probot) RunAction() error {
+	eventPath := os.Getenv("GITHUB_EVENT_PATH")
+	eventName := os.Getenv("GITHUB_EVENT_NAME")
+	if eventPath == "" || eventName == "" {
+		return errors.New("probot: GITHUB_EVENT_PATH and GITHUB_EVENT_NAME must be set to run in action mode")
+	}
+
+	body, err := os.ReadFile(eventPath)
+	if err != nil {
+		return fmt.Errorf("probot: reading event file: %w", err)
+	}
+
+	var payload map[string]any
+	if err := json.Unmarshal(body, &payload); err != nil {
+		return fmt.Errorf("probot: parsing event payload: %w", err)
+	}
+
+	deliveryID := os.Getenv("GITHUB_RUN_ID")
+	if deliveryID == "" {
+		deliveryID = "action"
+	}
+
+	p.log.Info().Str("event", eventName).Str("delivery_id", deliveryID).Msg("running as GitHub Action")
+	return p.Receive(WebhookEvent{Name: eventName, ID: deliveryID, Payload: payload})
 }

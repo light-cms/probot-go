@@ -7,6 +7,7 @@
 //		AppID:      os.Getenv("APP_ID"),
 //		PrivateKey: os.Getenv("PRIVATE_KEY"),
 //		Secret:     os.Getenv("WEBHOOK_SECRET"),
+//		Webhook: 	os.Getenv("WEBHOOK_URL")
 //	})
 //
 //	app.On("issues.opened", func(ctx *probot.Context) error {
