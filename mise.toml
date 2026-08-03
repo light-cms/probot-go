@@ -1,0 +1,6 @@
+[tools]
+go = "latest"
+golangci-lint = "latest"
+
+[deps]
+go = { auto = true }

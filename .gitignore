@@ -1,0 +1,9 @@
+# Credentials written by the setup wizard — never commit these.
+.env
+.env.*
+!.env.example
+*.pem
+
+# Build output
+/probot
+/probot-go
