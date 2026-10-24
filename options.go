@@ -159,12 +159,12 @@ func Defaults(o Options) func(*Options) {
 // (e.g. PROBOT_APP_ID).
 func OptionsFromEnv() (Options, error) {
 	o := Options{
-		AppID:       env("APP_ID"),
-		PrivateKey:  env("PRIVATE_KEY"),
-		Secret:      env("WEBHOOK_SECRET"),
-		GithubToken: env("GITHUB_TOKEN"),
-		LogLevel:    env("LOG_LEVEL"),
-		LogFormat:   env("LOG_FORMAT"),
+		AppID:           env("APP_ID"),
+		PrivateKey:      env("PRIVATE_KEY"),
+		Secret:          env("WEBHOOK_SECRET"),
+		GithubToken:     env("GITHUB_TOKEN"),
+		LogLevel:        env("LOG_LEVEL"),
+		LogFormat:       env("LOG_FORMAT"),
 		Host:            env("HOST"),
 		WebhookPath:     env("WEBHOOK_PATH"),
 		WebhookProxyURL: env("WEBHOOK_PROXY_URL"),
@@ -235,7 +235,6 @@ func LoadEnvFile(path string) error {
 // double quotes the way dotenv implementations do.
 func parseEnvValue(v string) string {
 	if len(v) >= 2 && v[0] == '\'' && v[len(v)-1] == '\'' {
-		// Single quotes are literal.
 		return v[1 : len(v)-1]
 	}
 	if len(v) >= 2 && v[0] == '"' && v[len(v)-1] == '"' {

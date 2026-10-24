@@ -3,8 +3,8 @@
 </p>
 
 <p align="center">
-  <a href="https://pkg.go.dev/github.com/pratyay360/probot-go"><img alt="go reference" src="https://pkg.go.dev/badge/github.com/pratyay360/probot-go.svg" /></a>
-  <a href="https://goreportcard.com/report/github.com/pratyay360/probot-go"><img alt="go report card" src="https://goreportcard.com/badge/github.com/pratyay360/probot-go" /></a>
+  <a href="https://pkg.go.dev/github.com/light-cms/probot-go"><img alt="go reference" src="https://pkg.go.dev/badge/github.com/light-cms/probot-go.svg" /></a>
+  <a href="https://goreportcard.com/report/github.com/light-cms/probot-go"><img alt="go report card" src="https://goreportcard.com/badge/github.com/light-cms/probot-go" /></a>
   <img alt="license" src="https://img.shields.io/badge/license-ISC-555555.svg" />
 </p>
 
@@ -17,7 +17,7 @@
 ## Quick Start
 
 ```sh
-go get github.com/pratyay360/probot-go
+go get github.com/light-cms/probot-go
 ```
 
 Create `main.go`:
@@ -30,7 +30,7 @@ import (
     "os"
 
     "github.com/google/go-github/github"
-    "github.com/pratyay360/probot-go"
+    "github.com/light-cms/probot-go"
 )
 
 func main() {

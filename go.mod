@@ -1,4 +1,4 @@
-module github.com/Pratyay360/probot-go
+module github.com/light-cms/probot-go
 
 go 1.26.5
 

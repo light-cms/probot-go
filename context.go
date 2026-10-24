@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"maps"
 	"strings"
 
 	"github.com/google/go-github/v88/github"
@@ -237,7 +238,7 @@ func (c *Context) loadExternalConfig(extends, path string) (map[string]any, bool
 
 // decodeConfig parses a config document, choosing JSON or YAML by the file
 // extension.
-func decodeConfig(raw, path string, out *map[string]any) error {
+func decodeConfig(raw, _ string, out *map[string]any) error {
 	if err := json.Unmarshal([]byte(raw), out); err == nil {
 		return nil
 	}
@@ -246,9 +247,7 @@ func decodeConfig(raw, path string, out *map[string]any) error {
 
 func mergeMaps(base, extra map[string]any) map[string]any {
 	out := make(map[string]any, len(base)+len(extra))
-	for k, v := range base {
-		out[k] = v
-	}
+	maps.Copy(out, base)
 	for k, v := range extra {
 		if bm, ok := out[k].(map[string]any); ok {
 			if em, ok2 := v.(map[string]any); ok2 {

@@ -18,7 +18,7 @@ import (
 
 	"github.com/rs/zerolog/log"
 
-	"github.com/Pratyay360/probot-go"
+	"github.com/light-cms/probot-go"
 )
 
 func main() {

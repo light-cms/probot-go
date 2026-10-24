@@ -8,7 +8,7 @@ import (
 	"github.com/rs/zerolog"
 )
 
-// newLogger builds a zerolog logger honouring the configured level and format.
+// newLogger builds a zerolog logger honoring the configured level and format.
 func newLogger(level, format string) zerolog.Logger {
 	lvl := parseLogLevel(level)
 	zerolog.SetGlobalLevel(lvl)
